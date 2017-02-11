@@ -19,23 +19,23 @@ declare var require: any;
 // import only type info
 import te = require("utf8-encoding");
 
-var TextEncoder, TextDecoder;
+let TextEncoder: any, TextDecoder: any, nativeURLSearchParams: any;
 if (typeof window === "undefined") { // in node.js
   var TextEncoding: typeof te = require("utf8-encoding");
   TextEncoder = TextEncoding.TextEncoder;
   TextDecoder = TextEncoding.TextDecoder;
 } else {
-  TextEncoder = window.TextEncoder;
-  TextDecoder = window.TextDecoder;
+  const w = window as any;
+  TextEncoder = w.TextEncoder;
+  TextDecoder = w.TextDecoder;
+
+  // save platform implementation if exists
+  if (typeof (w.URLSearchParams) !== "undefined") {
+  	nativeURLSearchParams = w.URLSearchParams;
+  }
 }
 
-// save platform implementation if exists
-var nativeURLSearchParams;
-if (typeof URLSearchParams !== "undefined") {
-  nativeURLSearchParams = URLSearchParams;
-}
-
-module URLSearchParams {
+module urlsearchparams {
 
   var encoder = new TextEncoder("utf-8");
   var decoder = new TextDecoder();
@@ -70,7 +70,7 @@ module URLSearchParams {
   }
 
   // utility not in spec
-  export function percentEncoder(str: string): string {
+  function percentEncoder(str: string): string {
     "use strict";
 
     var encoded = encode(str);
@@ -187,7 +187,7 @@ module URLSearchParams {
       if (bytes.length === 0) return;
 
       // step 6-2
-      var name, value;
+      var name: any, value: any;
       var i = bytes.indexOf(61);
       if (i > 0) { // =
         name = bytes.splice(0, i);
@@ -327,7 +327,7 @@ module URLSearchParams {
   //   iterable<USVString, USVString>;
   //   stringifier;
   // };
-  interface IURLSearchParams {
+  export interface IURLSearchParams {
     append(name: USVString, value: USVString): void;
     delete(name: USVString):                   void;
     get(name: USVString):                      USVString;
@@ -489,4 +489,7 @@ module URLSearchParams {
 // - window in browser
 // - module.exports in node.js
 // if platform has implements, use that.
-this.URLSearchParams = nativeURLSearchParams || URLSearchParams.URLSearchParams;
+let _URLSearchParams = nativeURLSearchParams || urlsearchparams.URLSearchParams;
+this.URLSearchParams = _URLSearchParams;
+export { urlsearchparams };
+export { _URLSearchParams as URLSearchParams };
